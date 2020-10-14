@@ -55,7 +55,13 @@ void BVHController::update(double time, bool updateRootXZTranslation)
 	// TODO: Given the current value of time, 
 	// 1. set the local transforms at each Skeleton joint using the cached spline data in member variables mRootMotion and mMotion 
 	// 2. update the joint transforms of the full skeleton in order to compute the global transforms at each joint
-	// Hint: the root can both rotate and translate (i.e. has 6 DOFs) while all the other joints just rotate 
+	// Hint: the root can both rotate and translate (i.e. has 6 DOFs) while all the other joints just rotate
+    if (updateRootXZTranslation == false) {
+        // Set xz root translate to 0
+    }
+    else {
+        // heck idunno
+    }
 
 }
 

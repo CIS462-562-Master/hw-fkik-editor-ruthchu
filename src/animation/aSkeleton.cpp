@@ -127,7 +127,10 @@ void ASkeleton::update()
 	if (!mRoot) return; // Nothing loaded
 
 	// TODO: Update Joint Transforms recursively, starting at the root
-
+	if (mRoot == nullptr) { // No root
+		return;
+	}
+	mRoot->updateTransform(); // updateTransform() recursively updates the children
 }
 
 AJoint* ASkeleton::getJointByName(const std::string& name) const
