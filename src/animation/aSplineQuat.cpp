@@ -130,7 +130,26 @@ void ASplineQuat::computeControlPoints(quat& startQuat, quat& endQuat)
 		//  for each cubic quaternion curve, then store the results in mCntrlPoints in same the same way 
 		//  as was used with the SplineVec implementation
 		//  Hint: use the SDouble, SBisect and Slerp to compute b1 and b2
+		q0 = mKeys[segment].second;
+		q1 = mKeys[segment + 1].second;
 
+		if (segment == 0) {	// Left endpoint
+			q_1 = quat::SBisect(quat::SDouble(startQuat, q0), q1);
+		}
+		else {		// Left-mid point
+			q_1 = quat::SBisect(quat::SDouble(mKeys[segment - 1].second, q0), q1);
+		}
+		if (segment == numKeys - 2) {		// Right endpoint
+			q2 = quat::SBisect(q0, quat::SDouble(endQuat, q1));
+		}
+		else {		// Right-mid point
+			q2 = quat::SBisect(q0, quat::SDouble(mKeys[segment + 2].second, q1));
+		}
+
+		b0 = q0;
+		b1 = quat::Slerp(q0, q_1, (1.0 / 3.0));
+		b2 = quat::Slerp(q1, q2, (1.0 / 3.0));
+		b3 = q1;
 
 		mCtrlPoints.push_back(b0);
 		mCtrlPoints.push_back(b1);
@@ -141,13 +160,13 @@ void ASplineQuat::computeControlPoints(quat& startQuat, quat& endQuat)
 
 quat ASplineQuat::getLinearValue(double t)
 {
-
 	quat q;
 	int segment = getCurveSegment(t);
 
 	// TODO: student implementation goes here
 	// compute the value of a linear quaternion spline at the value of t using slerp
-
+	double u = (t - mKeys[segment].first) / (mKeys[segment + 1].first - mKeys[segment].first);
+	q = quat::Slerp(mKeys[segment].second, mKeys[segment + 1].second, u);
 	return q;	
 }
 
@@ -175,7 +194,13 @@ quat ASplineQuat::getCubicValue(double t)
 
 	// TODO: student implementation goes here
 	// compute the value of a cubic quaternion spline at the value of t using Scubic
+	double u = (t - mKeys[segment].first) / (mKeys[segment + 1].first - mKeys[segment].first);
+	b0 = mCtrlPoints[4 * segment];
+	b1 = mCtrlPoints[4 * segment + 1];
+	b2 = mCtrlPoints[4 * segment + 2];
+	b3 = mCtrlPoints[4 * segment + 3];
 
+	q = quat::Scubic(b0, b1, b2, b3, u);
 	return q;
 }
 
