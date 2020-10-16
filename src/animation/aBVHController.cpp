@@ -65,7 +65,7 @@ void BVHController::update(double time, bool updateRootXZTranslation)
     }
     AJoint* rootNode = mSkeleton->getRootNode();
     rootNode->setLocalTranslation(rootTrans);
-    for (int i = 0; i < mMotion.size(); i++) {
+    for (int i = 0; i < mSkeleton->getNumJoints(); i++) {
         AJoint* currJoint = mSkeleton->getJointByID(i);
         quat localRot = mMotion[i].getCachedValue(time);
         currJoint->setLocalRotation(localRot.ToRotation());

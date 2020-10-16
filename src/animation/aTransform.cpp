@@ -30,30 +30,26 @@ ATransform ATransform::Inverse() const
 {
 	// TODO: compute the inverse of a transform given the current rotation and translation components
 	mat3 rotInverse = m_rotation.Transpose();
-	ATransform inverse = ATransform(rotInverse, rotInverse * m_translation * -1.0);
-	return inverse;
+	return ATransform(rotInverse, rotInverse * m_translation * -1.0);
 }
 
 
 vec3 ATransform::RotTrans(const vec3& vecToTransform) const
 {
 	// TODO: Transform the input vector based on this transform's rotation and translation components
-	vec3 rotTrans = m_rotation * vecToTransform + m_translation;
-	return rotTrans;
+	return m_rotation * vecToTransform + m_translation;
 }
 
 vec3 ATransform::Rotate(const vec3& vecToTransform) const
 {
 	// TODO: Transform the input direction based on this transform's rotation component
-	vec3 rot = m_rotation * vecToTransform;
-	return rot;
+	return m_rotation * vecToTransform;
 }
 
 vec3 ATransform::Translate(const vec3& vecToTransform) const
 {
 	// TODO: Transform the input vector based on this transform's translation component	
-	vec3 trans = vecToTransform + m_translation;
-	return trans;
+	return vecToTransform + m_translation;
 }
 
 ATransform operator * (const ATransform& H1, const ATransform& H2)
@@ -61,8 +57,7 @@ ATransform operator * (const ATransform& H1, const ATransform& H2)
 	// TODO: implement the equivalent of multiplying  H1 and H2 transformation matrices and return the result
 	// new rotation matrix = R1 * R2
 	// new displacement vector = R1 * d2 + d1
-	ATransform multiply = ATransform(H1.m_rotation * H2.m_rotation, H1.m_rotation * H2.m_translation + H1.m_translation);
-	return multiply;
+	return ATransform(H1.m_rotation * H2.m_rotation, H1.m_rotation * H2.m_translation + H1.m_translation);
 }
 
 vec3 operator * (const ATransform& A, const vec3& v)
