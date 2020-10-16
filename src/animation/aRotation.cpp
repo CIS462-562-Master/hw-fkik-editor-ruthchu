@@ -1289,6 +1289,7 @@ void quat::FromAxisAngle (const vec3& axis, double angleRad)
     vec3 nAxis = axis / sqrtf(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
     double s = sinf(angleRad / 2.0);
 	mQ[VW] = cosf(angleRad / 2.0); mQ[VX] = nAxis[0] * s; mQ[VY] = nAxis[1] * s;  mQ[VZ] = nAxis[2] * s;
+    Normalize();
 }
 
 mat3 quat::ToRotation () const
