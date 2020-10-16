@@ -1100,6 +1100,7 @@ void quat::FromRotation(const mat3& rot)
         mQ[VY] = (rot[1][2] + rot[2][1]) / s;
         mQ[VZ] = 0.25 * s;
     }
+    Normalize();
 }
 
 quat quat::Slerp(const quat& q0, const quat& q1, double u)
