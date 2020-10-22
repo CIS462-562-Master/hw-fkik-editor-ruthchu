@@ -263,18 +263,17 @@ int IKController::computeLimbIK(ATarget target, AIKchain& IKchain, const vec3 mi
 	AJoint* j2 = IKchain.getJoint(2);
 
 	vec3 t = target.getGlobalTranslation() - j2->getGlobalTranslation();
-	double l1 = j1->getLocalTranslation().Length();
-	double l2 = j0->getLocalTranslation().Length();
-	double phi = acosf((l1 * l1 + l2 * l2 - t.Length() * t.Length()) / (2.0 * l1 * l2));
-	
+	vec3 rd = j0->getGlobalTranslation() - j2->getGlobalTranslation();
+	double l1 = (j1->getGlobalTranslation() - j2->getGlobalTranslation()).Length();
+	double l2 = (target.getGlobalTranslation() - j1->getGlobalTranslation()).Length();
+	double phi = acos((l1 * l1 + l2 * l2 - t.Length() * t.Length()) / (2.0 * l1 * l2));
 	double theta2 = M_PI - phi;
 
 	mat3 midRotMat;
 	midRotMat.FromAxisAngle(midJointAxis, theta2);
 	j1->setLocalRotation(midRotMat);	// Set the middle joint's rotation matrix to the new calculated rotation.
 
-	vec3 rd = j0->getGlobalTranslation() - j2->getGlobalTranslation();
-	double alpha = acosf(Dot(t, rd) / (t.Length() * rd.Length()));
+	double alpha = acos(Dot(t, rd) / (t.Length() * rd.Length()));
 	if (alpha > 1.0) {
 		alpha = 1.0;
 	}
@@ -398,19 +397,27 @@ int IKController::computeCCDIK(ATarget target, AIKchain& IKchain, ASkeleton* pIK
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 1; j < IKchain.getSize(); j++) {
-			AJoint* currJoint = IKchain.getJoint(i);
-			vec3 e = target.getGlobalTranslation() - currJoint->getGlobalTranslation();
+			AJoint* currJoint = IKchain.getJoint(j);
+			double currWeight = IKchain.getWeight(j);
+
+			vec3 e = target.getGlobalTranslation() - IKchain.getJoint(0)->getGlobalTranslation();
 			vec3 r = IKchain.getJoint(0)->getGlobalTranslation() - currJoint->getGlobalTranslation();
-			double theta = IKchain.getWeight(i) * ((r.Cross(e)).Length() / (Dot(r, r) + Dot(r, e)));
-			vec3 axis = currJoint->getGlobalRotation().Transpose() * (r.Cross(e) / ((r.Cross(e)).Length()));
+
+			double theta = currWeight * (r.Cross(e).Length() / (Dot(r, r) + Dot(r, e)));
+			vec3 axis = currJoint->getGlobalRotation().Transpose() * (r.Cross(e) / (r.Cross(e)).Length());
+
 			mat3 localRot;
 			localRot.FromAxisAngle(axis, theta);
 			currJoint->setLocalRotation(currJoint->getLocalRotation() * localRot);
+
 			currJoint->updateTransform();
-			vec3 diff = IKchain.getJoint(0)->getGlobalTranslation() - target.getGlobalTranslation();
-			if (abs(diff[0]) < DBL_EPSILON && abs(diff[1]) < DBL_EPSILON && abs(diff[2]) < DBL_EPSILON) {
-				break;
+			for (int k = 0; k < currJoint->getNumChildren(); k++) {
+				currJoint->getChildAt(k)->updateTransform();
 			}
+		}
+		double diff = (IKchain.getJoint(0)->getGlobalTranslation() - target.getGlobalTranslation()).Length();
+		if (diff < DBL_EPSILON) {
+			break;
 		}
 	}
 	return true;
