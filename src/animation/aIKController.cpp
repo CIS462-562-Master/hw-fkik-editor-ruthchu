@@ -275,6 +275,12 @@ int IKController::computeLimbIK(ATarget target, AIKchain& IKchain, const vec3 mi
 
 	vec3 rd = j0->getGlobalTranslation() - j2->getGlobalTranslation();
 	double alpha = acosf(Dot(t, rd) / (t.Length() * rd.Length()));
+	if (alpha > 1.0) {
+		alpha = 1.0;
+	}
+	if (alpha < -1.0) {
+		alpha = -1.0;
+	}
 	vec3 axis = j2->getGlobalRotation().Transpose() * (rd.Cross(t) / rd.Cross(t).Length());
 
 	mat3 endRotMat;
@@ -401,9 +407,12 @@ int IKController::computeCCDIK(ATarget target, AIKchain& IKchain, ASkeleton* pIK
 			localRot.FromAxisAngle(axis, theta);
 			currJoint->setLocalRotation(currJoint->getLocalRotation() * localRot);
 			currJoint->updateTransform();
+			vec3 diff = IKchain.getJoint(0)->getGlobalTranslation() - target.getGlobalTranslation();
+			if (abs(diff[0]) < DBL_EPSILON && abs(diff[1]) < DBL_EPSILON && abs(diff[2]) < DBL_EPSILON) {
+				break;
+			}
 		}
 	}
-
 	return true;
 }
 

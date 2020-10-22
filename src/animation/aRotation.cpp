@@ -1116,11 +1116,11 @@ quat quat::Slerp(const quat& q0, const quat& q1, double u)
     
     double dotProduct = Dot(q_0, q_1);
 
-    if (dotProduct < 0.0) {
+    if (dotProduct < EPSILON) {
         q_1 = -q_1;
         dotProduct = -dotProduct;
     }
-    if (dotProduct  - 1.0 > EPSILON) {
+    if (dotProduct > 1.0) {
         q = q_0 * (1.0 - u) + q_1 * u;
         return q.Normalize();
     }
@@ -1133,7 +1133,9 @@ quat quat::Slerp(const quat& q0, const quat& q1, double u)
     u0 = cos(thetaOmega * u) - dotProduct * sin(thetaOmega * u) / sin(thetaOmega);
     u1 = sin(thetaOmega * u) / sin(thetaOmega);
     
-    return u0 * q_0 + u1 * q_1;
+    q = u0 * q_0 + u1 * q_1;
+
+    return q.Normalize();
 }
 
 quat quat::SDouble(const quat& a, const quat& b)
@@ -1256,30 +1258,17 @@ void quat::ToAxisAngle(vec3& axis, double& angleRad) const
     angleRad = 0.0;
     //TODO: student implementation for converting quaternion to axis/angle representation goes here
     double w, x, y, z;
-    if (mQ[VW] > 1.0) {
-        double d = sqrtf(mQ[VW] * mQ[VW] + mQ[VX] * mQ[VX] + mQ[VY] * mQ[VY] + mQ[VZ] * mQ[VZ]);
-        w = mQ[VW] / d;
-        x = mQ[VX] / d;
-        y = mQ[VY] / d;
-        z = mQ[VZ] / d;
-    }
-    else {
-        w = mQ[VW];
-        x = mQ[VX];
-        y = mQ[VY];
-        z = mQ[VZ];
-    }
-    angleRad = 2.0 * acosf(w);
-    double s = sqrtf(1.0 - w * w);
-    if (s < 0.001) {
-        axis[0] = x;
-        axis[1] = y;
-        axis[2] = z;
-    }
-    else {
+    double d = sqrt(mQ[VW] * mQ[VW] + mQ[VX] * mQ[VX] + mQ[VY] * mQ[VY] + mQ[VZ] * mQ[VZ]);
+    w = mQ[VW] / d;
+    x = mQ[VX] / d;
+    y = mQ[VY] / d;
+    z = mQ[VZ] / d;
+    angleRad = 2.0 * acos(w);
+    double s = sin(angleRad / 2.0);
+    if (abs(s) > EPSILON) {
         axis[0] = x / s;
-        axis[1] = y / s;
-        axis[2] = z / s;
+        axis[1] = y / x;
+        axis[2] = z / x;
     }
 }
 
@@ -1289,7 +1278,6 @@ void quat::FromAxisAngle (const vec3& axis, double angleRad)
     vec3 nAxis = axis / sqrtf(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
     double s = sinf(angleRad / 2.0);
 	mQ[VW] = cosf(angleRad / 2.0); mQ[VX] = nAxis[0] * s; mQ[VY] = nAxis[1] * s;  mQ[VZ] = nAxis[2] * s;
-    Normalize();
 }
 
 mat3 quat::ToRotation () const
