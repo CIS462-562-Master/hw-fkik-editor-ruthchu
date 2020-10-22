@@ -133,7 +133,28 @@ AIKchain IKController::createIKchain(int endJointID, int desiredChainSize, ASkel
 	// add the corresponding skeleton joint pointers to the AIKChain "chain" data member starting with the end joint
 	// desiredChainSize = -1 should create an IK chain of maximum length (where the last chain joint is the joint before the root joint)
 	// also add weight values to the associated AIKChain "weights" data member which can be used in a CCD IK implemention
-	return AIKchain();
+	AIKchain ikchain = AIKchain();
+	std::vector<AJoint*> joints;
+	std::vector<double> weights;
+	AJoint* currJoint = pSkeleton->getJointByID(endJointID);
+
+	if (desiredChainSize == -1) {
+		while (currJoint != pSkeleton->getRootNode()) {
+			joints.push_back(currJoint);
+			weights.push_back(0.1);
+			currJoint = currJoint->getParent();
+		}
+	}
+	else {
+		for (int i = 0; i < desiredChainSize; i++) {
+			joints.push_back(currJoint);
+			weights.push_back(0.1);
+			currJoint = currJoint->getParent();
+		}
+	}
+	ikchain.setChain(joints);
+	ikchain.setWeights(weights);
+	return ikchain;
 }
 
 
@@ -145,9 +166,12 @@ bool IKController::IKSolver_Limb(int endJointID, const ATarget& target)
 	// copy transforms from base skeleton
 	mIKSkeleton.copyTransforms(m_pSkeleton);
 
-	if (!mvalidLimbIKchains || createLimbIKchains())
+	if (!mvalidLimbIKchains)
 	{
-		return false;
+		mvalidLimbIKchains = createLimbIKchains();
+		if (!mvalidLimbIKchains) {
+			return false;
+		}
 	}
 
 	vec3 desiredRootPosition;
@@ -234,6 +258,28 @@ int IKController::computeLimbIK(ATarget target, AIKchain& IKchain, const vec3 mi
 	// TODO: Implement the analytic/geometric IK method assuming a three joint limb  
 	// The actual position of the end joint should match the target position within some episilon error 
 	// the variable "midJointAxis" contains the rotation axis for the middle joint
+	AJoint* j0 = IKchain.getJoint(0);
+	AJoint* j1 = IKchain.getJoint(1);
+	AJoint* j2 = IKchain.getJoint(2);
+
+	vec3 t = target.getGlobalTranslation() - j2->getGlobalTranslation();
+	double l1 = j1->getLocalTranslation().Length();
+	double l2 = j0->getLocalTranslation().Length();
+	double phi = acosf((l1 * l1 + l2 * l2 - t.Length() * t.Length()) / (2.0 * l1 * l2));
+	
+	double theta2 = M_PI - phi;
+
+	mat3 midRotMat;
+	midRotMat.FromAxisAngle(midJointAxis, theta2);
+	j1->setLocalRotation(midRotMat);	// Set the middle joint's rotation matrix to the new calculated rotation.
+
+	vec3 rd = j0->getGlobalTranslation() - j2->getGlobalTranslation();
+	double alpha = acosf(Dot(t, rd) / (t.Length() * rd.Length()));
+	vec3 axis = j2->getGlobalRotation().Transpose() * (rd.Cross(t) / rd.Cross(t).Length());
+
+	mat3 endRotMat;
+	endRotMat.FromAxisAngle(axis, alpha);
+	j2->setLocalRotation(j2->getLocalRotation() * endRotMat);
 	return true;
 }
 
