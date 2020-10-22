@@ -280,6 +280,7 @@ int IKController::computeLimbIK(ATarget target, AIKchain& IKchain, const vec3 mi
 	mat3 endRotMat;
 	endRotMat.FromAxisAngle(axis, alpha);
 	j2->setLocalRotation(j2->getLocalRotation() * endRotMat);
+	pIKSkeleton->update();
 	return true;
 }
 
@@ -388,6 +389,21 @@ int IKController::computeCCDIK(ATarget target, AIKchain& IKchain, ASkeleton* pIK
 	// 3. compute desired change to local rotation matrix
 	// 4. set local rotation matrix to new value
 	// 5. update transforms for joint and all children
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 1; j < IKchain.getSize(); j++) {
+			AJoint* currJoint = IKchain.getJoint(i);
+			vec3 e = target.getGlobalTranslation() - currJoint->getGlobalTranslation();
+			vec3 r = IKchain.getJoint(0)->getGlobalTranslation() - currJoint->getGlobalTranslation();
+			double theta = IKchain.getWeight(i) * ((r.Cross(e)).Length() / (Dot(r, r) + Dot(r, e)));
+			vec3 axis = currJoint->getGlobalRotation().Transpose() * (r.Cross(e) / ((r.Cross(e)).Length()));
+			mat3 localRot;
+			localRot.FromAxisAngle(axis, theta);
+			currJoint->setLocalRotation(currJoint->getLocalRotation() * localRot);
+			currJoint->updateTransform();
+		}
+	}
+
 	return true;
 }
 
