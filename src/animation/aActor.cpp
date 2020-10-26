@@ -109,6 +109,7 @@ void AActor::updateGuideJoint(vec3 guideTargetPos)
 	rootWorld[1] = 0.0;
 	m_Guide.setGlobalTranslation(rootWorld);
 	vec3 newTarget = (guideTargetPos - m_Guide.getGlobalTranslation());
+	newTarget[1] = 0.f;
 	newTarget.Normalize();
 	
 	vec3 xCol = vec3(0.f, 1.f, 0.f).Cross(newTarget);
@@ -139,9 +140,10 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 	if (rotateLeft)
 	{
 		// Update the local orientation of the left foot based on the left normal
-		// THE NORMALS POINT UP FROM THE GROUND
-		// they are 
-		;
+		//ATarget leftTar = ATarget();
+		////leftTar.setLocalTranslation(leftFoot->getLocalTranslation());
+		//leftTar.setLocalTranslation(leftFoot->getGlobalTranslation() + leftHeight);
+		//m_IKController->IKSolver_Limb(m_IKController->mLfootID, leftTar);
 	}
 	if (rotateRight)
 	{
