@@ -130,9 +130,7 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 
 	// 1.	Update the local translation of the root based on the left height and the right height
 	AJoint* root = m_pSkeleton->getRootNode();
-	vec3 rootWorld = m_Guide.getLocal2Global() * root->getGlobalTranslation();
-	vec3 newRoot = rootWorld + vec3(0.f, 100.f, 0.f);
-	root->setGlobalTranslation(newRoot);
+	root->setLocalTranslation(root->getLocalTranslation() + vec3(0.f, std::min(leftHeight, rightHeight), 0.f));
 	m_pSkeleton->update();
 
 	// 2.	Update the character with Limb-based IK 
@@ -141,6 +139,8 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 	if (rotateLeft)
 	{
 		// Update the local orientation of the left foot based on the left normal
+		// THE NORMALS POINT UP FROM THE GROUND
+		// they are 
 		;
 	}
 	if (rotateRight)
