@@ -145,20 +145,15 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 		vec3 modFoot = vec3(leftFoot->getGlobalTranslation()[0], leftHeight, leftFoot->getGlobalTranslation()[2]);
 		tar.setGlobalTranslation(modFoot);
 		m_IKController->IKSolver_Limb(m_IKController->mLfootID, tar);
+		vec3 yVec = leftFoot->getLocalRotation().Transpose()[1];
+
+		vec3 yCol = leftNormal.Normalize();
+		vec3 zCol = yVec.Cross(yCol).Normalize();
+		vec3 xCol = zCol.Cross(yCol).Normalize();
 		
-		vec3 u1 = leftFoot->getLocalRotation().Transpose()[1];
-
-		vec3 axis = u1.Cross(leftNormal);
-
-		const float cosA = Dot(u1, leftNormal);
-		const float k = 1.0f / (1.0f + cosA);
-
-		mat3 modifyRot = mat3(
-			vec3((axis[0] * axis[0] * k) + cosA, (axis[1] * axis[0] * k) - axis[2], (axis[2] * axis[0] * k) + axis[1]),
-			vec3((axis[0] * axis[1] * k) + axis[2], (axis[1] * axis[1] * k) + cosA, (axis[2] * axis[1] * k) - axis[0]),
-			vec3((axis[0] * axis[2] * k) - axis[1], (axis[1] * axis[2] * k) + axis[0], (axis[2] * axis[2] * k) + cosA));
-
-		leftFoot->setLocalRotation(leftFoot->getLocalRotation() * modifyRot);
+		mat3 orient = mat3(xCol, yCol, zCol).Transpose();
+		
+		leftFoot->setLocalRotation(orient);
 		m_pSkeleton->update();
 	}
 	if (rotateRight)
@@ -168,20 +163,15 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 		vec3 modFoot = vec3(rightFoot->getGlobalTranslation()[0], rightHeight, rightFoot->getGlobalTranslation()[2]);
 		tar.setGlobalTranslation(modFoot);
 		m_IKController->IKSolver_Limb(m_IKController->mRfootID, tar);
+		vec3 yVec = rightFoot->getLocalRotation().Transpose()[1];
 
-		vec3 u1 = rightFoot->getLocalRotation().Transpose()[1];
+		vec3 yCol = rightNormal.Normalize();
+		vec3 zCol = yVec.Cross(yCol).Normalize();
+		vec3 xCol = zCol.Cross(yCol).Normalize();
 
-		vec3 axis = u1.Cross(rightNormal);
+		mat3 orient = mat3(xCol, yCol, zCol).Transpose();
 
-		const float cosA = Dot(u1, rightNormal);
-		const float k = 1.0f / (1.0f + cosA);
-
-		mat3 modifyRot = mat3(
-			vec3((axis[0] * axis[0] * k) + cosA, (axis[1] * axis[0] * k) - axis[2], (axis[2] * axis[0] * k) + axis[1]),
-			vec3((axis[0] * axis[1] * k) + axis[2], (axis[1] * axis[1] * k) + cosA, (axis[2] * axis[1] * k) - axis[0]),
-			vec3((axis[0] * axis[2] * k) - axis[1], (axis[1] * axis[2] * k) + axis[0], (axis[2] * axis[2] * k) + cosA));
-
-		rightFoot->setLocalRotation(rightFoot->getLocalRotation() * modifyRot);
+		rightFoot->setLocalRotation(orient);
 		m_pSkeleton->update();
 	}
 }
