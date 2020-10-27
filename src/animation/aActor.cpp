@@ -131,7 +131,7 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 
 	// 1.	Update the local translation of the root based on the left height and the right height
 	AJoint* root = m_pSkeleton->getRootNode();
-	root->setLocalTranslation(root->getLocalTranslation() + vec3(0.f, std::min(leftHeight, rightHeight), 0.f));
+	root->setLocalTranslation(root->getLocalTranslation() + vec3(0.f, std::max(leftHeight, rightHeight), 0.f));
 	m_pSkeleton->update();
 
 	// 2.	Update the character with Limb-based IK 
@@ -140,15 +140,48 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 	if (rotateLeft)
 	{
 		// Update the local orientation of the left foot based on the left normal
-		//ATarget leftTar = ATarget();
-		////leftTar.setLocalTranslation(leftFoot->getLocalTranslation());
-		//leftTar.setLocalTranslation(leftFoot->getGlobalTranslation() + leftHeight);
-		//m_IKController->IKSolver_Limb(m_IKController->mLfootID, leftTar);
+		// Want to rotate foot so it is flush agains the angle of the ground
+		ATarget tar;
+		vec3 modFoot = vec3(leftFoot->getGlobalTranslation()[0], leftHeight, leftFoot->getGlobalTranslation()[2]);
+		tar.setGlobalTranslation(modFoot);
+		m_IKController->IKSolver_Limb(m_IKController->mLfootID, tar);
+		
+		vec3 u1 = leftFoot->getLocalRotation().Transpose()[1];
+
+		vec3 axis = u1.Cross(leftNormal);
+
+		const float cosA = Dot(u1, leftNormal);
+		const float k = 1.0f / (1.0f + cosA);
+
+		mat3 modifyRot = mat3(
+			vec3((axis[0] * axis[0] * k) + cosA, (axis[1] * axis[0] * k) - axis[2], (axis[2] * axis[0] * k) + axis[1]),
+			vec3((axis[0] * axis[1] * k) + axis[2], (axis[1] * axis[1] * k) + cosA, (axis[2] * axis[1] * k) - axis[0]),
+			vec3((axis[0] * axis[2] * k) - axis[1], (axis[1] * axis[2] * k) + axis[0], (axis[2] * axis[2] * k) + cosA));
+
+		leftFoot->setLocalRotation(leftFoot->getLocalRotation() * modifyRot);
+		m_pSkeleton->update();
 	}
 	if (rotateRight)
 	{
 		// Update the local orientation of the right foot based on the right normal
-		;
+		ATarget tar;
+		vec3 modFoot = vec3(rightFoot->getGlobalTranslation()[0], rightHeight, rightFoot->getGlobalTranslation()[2]);
+		tar.setGlobalTranslation(modFoot);
+		m_IKController->IKSolver_Limb(m_IKController->mRfootID, tar);
+
+		vec3 u1 = rightFoot->getLocalRotation().Transpose()[1];
+
+		vec3 axis = u1.Cross(rightNormal);
+
+		const float cosA = Dot(u1, rightNormal);
+		const float k = 1.0f / (1.0f + cosA);
+
+		mat3 modifyRot = mat3(
+			vec3((axis[0] * axis[0] * k) + cosA, (axis[1] * axis[0] * k) - axis[2], (axis[2] * axis[0] * k) + axis[1]),
+			vec3((axis[0] * axis[1] * k) + axis[2], (axis[1] * axis[1] * k) + cosA, (axis[2] * axis[1] * k) - axis[0]),
+			vec3((axis[0] * axis[2] * k) - axis[1], (axis[1] * axis[2] * k) + axis[0], (axis[2] * axis[2] * k) + cosA));
+
+		rightFoot->setLocalRotation(rightFoot->getLocalRotation() * modifyRot);
+		m_pSkeleton->update();
 	}
-	m_pSkeleton->update();
 }
