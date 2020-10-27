@@ -153,7 +153,12 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 		
 		mat3 orient = mat3(xCol, yCol, zCol).Transpose();
 		
-		leftFoot->setLocalRotation(orient);
+		if (m_Guide.getGlobalRotation()[2][2] < 0) {
+			leftFoot->setLocalRotation(orient.Inverse());
+		}
+		else {
+			leftFoot->setLocalRotation(orient);
+		}
 		m_pSkeleton->update();
 	}
 	if (rotateRight)
@@ -171,7 +176,12 @@ void AActor::solveFootIK(float leftHeight, float rightHeight, bool rotateLeft, b
 
 		mat3 orient = mat3(xCol, yCol, zCol).Transpose();
 
-		rightFoot->setLocalRotation(orient);
+		if (m_Guide.getGlobalRotation()[2][2] < 0) {
+			rightFoot->setLocalRotation(orient.Inverse());
+		}
+		else {
+			rightFoot->setLocalRotation(orient);
+		}
 		m_pSkeleton->update();
 	}
 }
